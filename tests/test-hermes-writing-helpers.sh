@@ -30,7 +30,11 @@ bash "$root/scripts/hermes-writing-init.sh" "$repo" >/dev/null
 bash "$root/scripts/hermes-writing-init.sh" "$repo" >/dev/null
 test "$(cat "$worktree/AGENTS.md")" = '# repository rules'
 test -f "$worktree/.hermes.md"
-test "$(stat -f %Lp "$worktree" 2>/dev/null || stat -c %a "$worktree")" = 700
+if stat -c %a "$worktree" >/dev/null 2>&1; then
+  test "$(stat -c %a "$worktree")" = 700
+else
+  test "$(stat -f %Lp "$worktree")" = 700
+fi
 
 # 既存ブランチでも、まだ worktree がない場合は同じ初期化を行える。
 git -C "$repo" branch agent/existing
