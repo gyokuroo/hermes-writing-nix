@@ -42,3 +42,9 @@ GitHub の初回認証は、対象ホスト上で専用ラッパーを使って�
 
 既定のプロバイダは `openai-codex`、モデルは `gpt-6-sol`。GitHubユーザーと
 コミット作者メールはmodule optionから変更できる。
+
+Hermes本体は upstream v0.23.1 の Flake が固定する nixpkgs で評価する。
+これにより、ホスト側の nixpkgs pin に含まれる `fetchPnpmDeps` やビルドツールの
+差異が、upstream lockfile の固定出力 package に影響しない。Home Manager の
+module評価と執筆用ヘルパーはホスト側の `pkgs` を使う。Hermes upstream を更新する
+ときは、upstream lockfile の nixpkgs 変更も確認する。

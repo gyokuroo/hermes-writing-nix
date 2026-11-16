@@ -9,7 +9,6 @@
     };
     hermes-agent = {
       url = "github:NousResearch/hermes-agent/v0.23.1";
-      inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
   };
@@ -18,16 +17,25 @@
     let
       systems = [ "x86_64-linux" "aarch64-linux" ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
+      mkHermes = system: hermes-agent.packages.${system}.default;
     in {
       homeManagerModules.default = {
-        imports = [ hermes-agent.homeManagerModules.default ./default.nix ];
+        imports = [
+          hermes-agent.homeManagerModules.default
+          ./default.nix
+          ({ lib, pkgs, ... }: {
+            services.hermes-agent.package = lib.mkDefault (mkHermes pkgs.system);
+          })
+        ];
       };
       packages = forAllSystems (system: {
+        hermes-agent = mkHermes system;
         hermes-writing-backup = nixpkgs.legacyPackages.${system}.callPackage ./packages/backup.nix { };
       });
       checks = forAllSystems (system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
+          hermesPackage = mkHermes system;
           makeConfig = module: home-manager.lib.homeManagerConfiguration {
             inherit pkgs;
             modules = [
@@ -61,6 +69,8 @@
           homePackageNames = builtins.map (package: package.name or "") enabled.config.home.packages;
           check = assert enabled.config.services.hermes-agent.hermesHome == "/srv/hermes";
             assert enabled.config.services.hermes-agent.workingDirectory == "/srv/worktree";
+            assert enabled.config.services.hermes-agent.package.drvPath == hermesPackage.drvPath;
+            assert enabled.config.programs.hermes-agent.package.drvPath == hermesPackage.drvPath;
             assert enabled.config.systemd.user.services.hermes-agent.Unit.ConditionPathExists == "/srv/hermes.env";
             assert pathEntries != [];
             assert pkgs.lib.hasPrefix "PATH=${enabled.config.programs.hermes-agent.writingGithub.path}:" (builtins.elemAt pathEntries ((builtins.length pathEntries) - 1));
@@ -76,6 +86,17 @@
             assert builtins.all (name: !(pkgs.lib.hasInfix "hermes" name))
               (builtins.map (package: package.name or "") disabled.config.home.packages);
             pkgs.runCommand "hermes-writing-module-check" { } "touch $out";
-        in { module = check; });
+        in {
+          module = check;
+          hermes-agent = pkgs.runCommand "hermes-agent-build-smoke" { nativeBuildInputs = [ pkgs.gnugrep ]; } ''
+            mkdir -p "$out" "$TMPDIR/home" "$TMPDIR/hermes"
+            test -x ${hermesPackage}/bin/hermes
+            HOME="$TMPDIR/home" HERMES_HOME="$TMPDIR/hermes" ${hermesPackage}/bin/hermes --version > "$out/hermes-version" 2>&1
+            grep -qi hermes "$out/hermes-version"
+            ${hermesPackage.passthru.hermesNpmLib.nodejs}/bin/node --version > "$out/node-version"
+            ${hermesPackage.passthru.hermesNpmLib.pnpm}/bin/pnpm --version > "$out/pnpm-version"
+            ${hermesPackage.passthru.pmPython}/bin/python3 --version > "$out/python-version"
+          '';
+        });
     };
 }
