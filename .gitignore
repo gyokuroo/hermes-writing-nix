@@ -1,0 +1,19 @@
+# 実行時状態と認証情報
+.env
+.env.*
+*.sqlite
+*.sqlite3
+*.db
+*.db-*
+gh/
+state/
+sessions/
+memories/
+
+# Pythonの生成物
+__pycache__/
+*.py[cod]
+
+# Nixのローカル生成物
+result
+result-*

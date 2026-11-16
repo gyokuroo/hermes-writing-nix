@@ -1,0 +1,19 @@
+name: check
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  nix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+      - run: nix flake check --no-write-lock-file
+      - run: bash tests/test-hermes-writing-helpers.sh
+      - run: bash tests/test-github-isolation.sh
+      - run: bash tests/test-hermes-shell.sh
+      - run: bash tests/backup-hermes.bash
