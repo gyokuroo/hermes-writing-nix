@@ -86,6 +86,8 @@
           homePackageNames = builtins.map (package: package.name or "") enabled.config.home.packages;
           check = assert enabled.config.services.hermes-agent.hermesHome == "/srv/hermes";
             assert enabled.config.services.hermes-agent.workingDirectory == "/srv/worktree";
+            assert enabled.config.services.hermes-agent.package.drvPath == hermesPackage.drvPath;
+            assert enabled.config.programs.hermes-agent.package.drvPath == hermesPackage.drvPath;
             assert enabled.config.systemd.user.services.hermes-agent.Unit.ConditionPathExists == "/srv/hermes.env";
             assert pathEntries != [];
             assert pkgs.lib.hasPrefix "PATH=${enabled.config.programs.hermes-agent.writingGithub.path}:" (builtins.elemAt pathEntries ((builtins.length pathEntries) - 1));
