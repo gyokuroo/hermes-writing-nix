@@ -42,3 +42,7 @@ GitHub の初回認証は、対象ホスト上で専用ラッパーを使って�
 
 既定のプロバイダは `openai-codex`、モデルは `gpt-6-sol`。GitHubユーザーと
 コミット作者メールはmodule optionから変更できる。
+
+Hermesの依存packageで使う `patchelf` は、upstream v0.19.2のソースを固定している。
+これにより、hostのnixpkgsが古い `patchelf` を含んでいても、Hermes upstreamが
+必要とする回帰修正patchを一度だけ適用できる。
