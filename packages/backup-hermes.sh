@@ -238,6 +238,7 @@ elif "$source_git_metadata"; then
   echo 'writing backup: source has Git metadata but its common directory cannot be resolved' >&2
   exit 1
 fi
+mkdir -p "$staging/novel" "$staging/worktrees/hermes"
 "$RSYNC_BIN" -aH --numeric-ids -- "$source_dir/" "$staging/novel/"
 if [ -n "$source_common_dir" ]; then
   case "$source_common_dir" in
