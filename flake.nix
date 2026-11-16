@@ -9,7 +9,6 @@
     };
     hermes-agent = {
       url = "github:NousResearch/hermes-agent/v0.23.1";
-      inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
   };
@@ -18,41 +17,25 @@
     let
       systems = [ "x86_64-linux" "aarch64-linux" ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
-      mkHermes = pkgs:
-        let
-          patchelf0192 = pkgs.patchelf.overrideAttrs (_: {
-            version = "0.19.2";
-            src = pkgs.fetchurl {
-              url = "https://github.com/NixOS/patchelf/releases/download/0.19.2/patchelf-0.19.2.tar.bz2";
-              hash = "sha256-1K2aTlxongkRnOLzCpSw6LT5jHhZASPqIWZeNMaSiAE=";
-            };
-            patches = [ ];
-          });
-          pmPackages = pkgs.callPackage "${hermes-agent}/nix/pm-packages.nix" { patchelf = patchelf0192; };
-        in
-        {
-          package = hermes-agent.packages.${pkgs.system}.default.override { inherit pmPackages; };
-          inherit pmPackages;
-        };
+      mkHermes = system: hermes-agent.packages.${system}.default;
     in {
       homeManagerModules.default = {
         imports = [
           hermes-agent.homeManagerModules.default
           ./default.nix
           ({ lib, pkgs, ... }: {
-            services.hermes-agent.package = lib.mkDefault (mkHermes pkgs).package;
+            services.hermes-agent.package = lib.mkDefault (mkHermes pkgs.system);
           })
         ];
       };
       packages = forAllSystems (system: {
-        hermes-agent = (mkHermes nixpkgs.legacyPackages.${system}).package;
+        hermes-agent = mkHermes system;
         hermes-writing-backup = nixpkgs.legacyPackages.${system}.callPackage ./packages/backup.nix { };
       });
       checks = forAllSystems (system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-          hermesBuild = mkHermes pkgs;
-          hermesPackage = hermesBuild.package;
+          hermesPackage = mkHermes system;
           makeConfig = module: home-manager.lib.homeManagerConfiguration {
             inherit pkgs;
             modules = [
@@ -110,9 +93,9 @@
             test -x ${hermesPackage}/bin/hermes
             HOME="$TMPDIR/home" HERMES_HOME="$TMPDIR/hermes" ${hermesPackage}/bin/hermes --version > "$out/hermes-version" 2>&1
             grep -qi hermes "$out/hermes-version"
-            ${hermesBuild.pmPackages.node}/bin/node --version > "$out/node-version"
-            ${hermesBuild.pmPackages.pnpm}/bin/pnpm --version > "$out/pnpm-version"
-            ${hermesBuild.pmPackages.python}/bin/python3 --version > "$out/python-version"
+            ${hermesPackage.passthru.hermesNpmLib.nodejs}/bin/node --version > "$out/node-version"
+            ${hermesPackage.passthru.hermesNpmLib.pnpm}/bin/pnpm --version > "$out/pnpm-version"
+            ${hermesPackage.passthru.pmPython}/bin/python3 --version > "$out/python-version"
           '';
         });
     };
