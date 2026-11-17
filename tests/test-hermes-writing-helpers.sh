@@ -123,7 +123,8 @@ HERMES_BIN="$fake_cron" HERMES_WRITING_READY=true CRON_LIST="$cron_list" CRON_LO
 grep -Fq 'cron create 5m' "$cron_log"
 grep -Fq -- '--name hermes-writing' "$cron_log"
 grep -Fq -- "--workdir $worktree" "$cron_log"
-grep -Fq -- '--deliver discord' "$cron_log"
+grep -Fq -- '--deliver local' "$cron_log"
+grep -Fq -- '--failure-deliver local' "$cron_log"
 printf '%s\n' '    Name:      hermes-writing-extra' '    Name:      hermes-writing' > "$cron_list"
 if HERMES_BIN="$fake_cron" HERMES_WRITING_READY=true CRON_LIST="$cron_list" CRON_LOG="$cron_log" \
   bash "$root/scripts/hermes-writing-start.sh" >/dev/null 2>&1; then

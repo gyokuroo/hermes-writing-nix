@@ -34,6 +34,8 @@ services.hermes-writing = {
 GitHub の初回認証は、対象ホスト上で専用ラッパーを使って行う。
 認証情報、原稿、Hermes の実行状態はこのリポジトリへ保存しない。
 
+writer cron の実行結果と失敗通知は `local` に保存し、外部メッセージサービスへは送信しない。
+
 ## 主な公開インターフェース
 
 - `homeManagerModules.default`

@@ -114,7 +114,8 @@ with open(lock_path, "a+", encoding="utf-8") as lock:
         subprocess.run(
             [
                 hermes, "cron", "create", schedule, prompt,
-                "--name", job_name, "--workdir", worktree, "--deliver", "discord",
+                "--name", job_name, "--workdir", worktree,
+                "--deliver", "local", "--failure-deliver", "local",
             ],
             check=True,
         )
